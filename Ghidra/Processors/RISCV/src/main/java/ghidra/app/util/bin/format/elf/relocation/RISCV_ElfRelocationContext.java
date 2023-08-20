@@ -28,30 +28,6 @@ class RISCV_ElfRelocationContext extends ElfRelocationContext {
 	}
 
 	/**
-	 * <code>OffsetComparator</code> provides ability to compare a Long ElfSymbol offset value with an
-	 * ElfRelocation object's relocation offset.
-	 */
-	private static class OffsetComparator implements Comparator<Object> {
-
-		public static final OffsetComparator INSTANCE = new OffsetComparator();
-
-		@Override
-		public int compare(Object o1, Object o2) {
-			if (o1 instanceof Long) {
-				return -compare(o2, o1);
-			}
-			ElfRelocation rel = (ElfRelocation) o1;
-			long relOffset = rel.getOffset();
-			long offset = (Long) o2;
-			if (relOffset == offset) {
-				return 0;
-			}
-			return Long.compareUnsigned(relOffset, offset);
-		}
-
-	}
-
-	/**
 	 * Find the HI20 relocation whose offset matches the value of of the specified symbol.
 	 * @param hi20Symbol ELF symbol which corresponds to HI20 relocation
 	 * @return matching relocation or null if not found
@@ -61,23 +37,17 @@ class RISCV_ElfRelocationContext extends ElfRelocationContext {
 		Long symValue = hi20Symbol.getValue();
 
 		// Search for first relocation within table whose offset matches the specified hi20Symbol value
+		// and whose type is appropriate for a Lo12 backreference
 		ElfRelocation[] relocations = relocationTable.getRelocations();
-		int relIndex = Arrays.binarySearch(relocations, symValue, OffsetComparator.INSTANCE);
-		if (relIndex < 0) {
-			return null; // relocation not found
-		}
-		// back-up in the event there is more than one matching relocation offset
-		while (relIndex > 0 && relocations[relIndex - 1].getOffset() == symValue) {
-			--relIndex;
-		}
-		// look for hi20 relocation
-		while (relIndex < relocations.length && relocations[relIndex - 1].getOffset() == symValue) {
-			int type = relocations[relIndex].getType();
-			if ((type == RISCV_ElfRelocationConstants.R_RISCV_PCREL_HI20) ||
+		// Search the entire Elf relocation table for a matching hi20Symbol
+		for (ElfRelocation r : relocations) {
+			int type = r.getType();
+			if ((r.getOffset() == symValue) &&
+				(type == RISCV_ElfRelocationConstants.R_RISCV_PCREL_HI20) ||
 				(type == RISCV_ElfRelocationConstants.R_RISCV_GOT_HI20)) {
-				return relocations[relIndex];
+					return r;
 			}
 		}
-		return null;
+	return null; // relocation not found
 	}
 }
