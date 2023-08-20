@@ -324,7 +324,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			case RISCV_ElfRelocationConstants.R_RISCV_PCREL_LO12_S:
 				// PC-relative reference %pcrel_lo(symbol) (S-Type)
 				//    S-type immediates split the 12 bit value into separate 7 bit and 5 bit fields.
-				// Warning: untested!
+
 				target = getSymbolValueIndirect(elfRelocationContext, sym,
 					relocationAddress.getOffset() - relocation.getOffset());
 				if (target == 0) {
@@ -333,8 +333,8 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 						elfRelocationContext.getLog());
 					return RelocationResult.FAILURE;
 				}
-				value32 = ((target & 0x000007f) << 25) | (target & 0x00000f80) |
-					(memory.getInt(relocationAddress) & 0x1fff07f);
+				value32 = ((target & 0x00000f80) << 20) | ((target & 0x0000007f) << 7) |
+					(memory.getInt(relocationAddress) & 0x01fff07f);
 				memory.setInt(relocationAddress, value32);
 				break;
 
