@@ -333,7 +333,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 						elfRelocationContext.getLog());
 					return RelocationResult.FAILURE;
 				}
-				value32 = ((target & 0x00000f80) << 20) | ((target & 0x0000007f) << 7) |
+				value32 = ((target & 0x00000fe0) << 20) | ((target & 0x0000001f) << 7) |
 					(memory.getInt(relocationAddress) & 0x01fff07f);
 				memory.setInt(relocationAddress, value32);
 				break;
