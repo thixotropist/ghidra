@@ -257,7 +257,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 				// PC-relative branch (B-Type)
 				target = (int) (addend + symbolValue - offset);
 				value32 =
-					((target & 0x01e) << 7) | ((target & 0x0800) >> 4) | ((target & 0x03e0) << 20) |
+					((target & 0x01e) << 7) | ((target & 0x0800) >> 4) | ((target & 0x07e0) << 20) |
 						((target & 0x1000) << 19) | (memory.getInt(relocationAddress) & 0x1fff07f);
 				memory.setInt(relocationAddress, value32);
 				break;
