@@ -832,7 +832,7 @@ public class PeLoader extends AbstractPeDebugLoader {
 	private Address getILEntryPoint(OptionalHeader optionalHeader) {
 		// Check to see if this binary has a COMDescriptorDataDirectory in it. If so,
 		// it might be a .NET binary, and if it is and only has a managed code entry point
-		// the value at entry is actually a table index and and row index that we parse in
+		// the value at entry is actually a table index and a row index that we parse in
 		// the ImageCor20Header class. Use that to create the entry label instead later.
 
 		DataDirectory[] dataDirectories = optionalHeader.getDataDirectories();
@@ -975,16 +975,22 @@ public class PeLoader extends AbstractPeDebugLoader {
 			DOSHeader dh = pe.getDOSHeader();
 
 			// Check for Rust.  Program object is required, which may be null.
-			if (program != null && RustUtilities.isRust(program.getMemory().getBlock(".rdata"))) {
-				try {
-					int extensionCount = RustUtilities.addExtensions(program, monitor,
-						RustConstants.RUST_EXTENSIONS_WINDOWS);
-					log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+			try {
+				if (program != null && RustUtilities.isRust(program,
+					program.getMemory().getBlock(".rdata"), monitor)) {
+					try {
+						int extensionCount = RustUtilities.addExtensions(program, monitor,
+							RustConstants.RUST_EXTENSIONS_WINDOWS);
+						log.appendMsg("Installed " + extensionCount + " Rust cspec extensions");
+					}
+					catch (IOException e) {
+						log.appendMsg("Rust error: " + e.getMessage());
+					}
+					return CompilerEnum.Rustc;
 				}
-				catch (IOException e) {
-					log.appendMsg("Rust error: " + e.getMessage());
-				}
-				return CompilerEnum.Rustc;
+			}
+			catch (CancelledException e) {
+				// Move on
 			}
 			
 			// Check for Swift

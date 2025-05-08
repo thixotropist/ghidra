@@ -57,7 +57,7 @@ public class DWARFUtil {
 	 * Returns the field name of a final static variable in class <code>clazz</code>
 	 * which holds a specific value.
 	 * <p>
-	 * Can be thought of as an enum numeric value to to name lookup.
+	 * Can be thought of as an enum numeric value to do a name lookup.
 	 * 
 	 * @param clazz
 	 * @param value
@@ -346,7 +346,7 @@ public class DWARFUtil {
 		dtc.setComment(prev + description);
 	}
 
-	public static void appendComment(Program program, Address address, int commentType,
+	public static void appendComment(Program program, Address address, CommentType commentType,
 			String prefix, String comment, String sep) {
 		if (comment == null || comment.isBlank()) {
 			return;
@@ -359,7 +359,7 @@ public class DWARFUtil {
 				return;
 			}
 		}
-		AppendCommentCmd cmd = new AppendCommentCmd(address, commentType,
+		AppendCommentCmd cmd = new AppendCommentCmd(address, commentType.ordinal(),
 			Objects.requireNonNullElse(prefix, "") + comment, sep);
 		cmd.applyTo(program);
 	}
