@@ -624,8 +624,8 @@ define pcodeop vfirst_m;
 define pcodeop vfmacc_vf;
 # vfmacc.vf      31..26=0x2c vm vs2 frs1 14..12=0x5 vd 6..0=0x57
 # vfmacc.vf vd, frs1, vs2, vm    # vd[i] = +(f[rs1] * vs2[i]) + vd[i]
-:vfmacc.vf  vd, frs1, vs2         is op2631=0x2c & op2525=0x1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmacc_vf(frs1,vs2);}
-:vfmacc.vf  vd, frs1, vs2, "v0.t" is op2631=0x2c & op2525=0x0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmacc_vf(frs1,vs2,v0);}
+:vfmacc.vf  vd, frs1, vs2         is op2631=0x2c & op2525=0x1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmacc_vf(frs1,vs2,vd);}
+:vfmacc.vf  vd, frs1, vs2, "v0.t" is op2631=0x2c & op2525=0x0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmacc_vf(frs1,vs2,vd,v0);}
 
 define pcodeop vfmacc_vv;
 # vfmacc.vv      31..26=0x2c vm vs2 vs1 14..12=0x1 vd 6..0=0x57
@@ -635,15 +635,15 @@ define pcodeop vfmacc_vv;
 
 define pcodeop vfmadd_vf;
 # vfmadd.vf      31..26=0x28 vm vs2 frs1 14..12=0x5 vd 6..0=0x57
-# vfmadd.vf vd, frs1, vs2, vm    # vd[i] = +(f[rs1] * vd[i]) + vs2[i]
-:vfmadd.vf  vd, frs1, vs2         is op2631=0x28 & op2525=0x1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmadd_vf(frs1,vs2);}
-:vfmadd.vf  vd, frs1, vs2, "v0.t" is op2631=0x28 & op2525=0x0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmadd_vf(frs1,vs2,v0);}
+# vfmadd.vf vd, frs1, vs2, vm    # vd[i] = +(f[rs1] * vs2[i]) + vd[i]
+:vfmadd.vf  vd, frs1, vs2         is op2631=0x28 & op2525=0x1 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmadd_vf(frs1,vs2,vd);}
+:vfmadd.vf  vd, frs1, vs2, "v0.t" is op2631=0x28 & op2525=0x0 & vs2 & frs1 & op1214=0x5 & vd & op0006=0x57 {vd=vfmadd_vf(frs1,vs2,vd,v0);}
 
 define pcodeop vfmadd_vv;
 # vfmadd.vv      31..26=0x28 vm vs2 vs1 14..12=0x1 vd 6..0=0x57
-# vfmadd.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vd[i]) + vs2[i]
-:vfmadd.vv  vd, vs1, vs2         is op2631=0x28 & op2525=0x1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmadd_vv(vs1,vs2);}
-:vfmadd.vv  vd, vs1, vs2, "v0.t" is op2631=0x28 & op2525=0x0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmadd_vv(vs1,vs2,v0);}
+# vfmadd.vv vd, vs1, vs2, vm    # vd[i] = +(vs1[i] * vs2[i]) + vd[i]
+:vfmadd.vv  vd, vs1, vs2         is op2631=0x28 & op2525=0x1 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmadd_vv(vs1,vs2,vd);}
+:vfmadd.vv  vd, vs1, vs2, "v0.t" is op2631=0x28 & op2525=0x0 & vs2 & vs1 & op1214=0x1 & vd & op0006=0x57 {vd=vfmadd_vv(vs1,vs2,vd,v0);}
 
 define pcodeop vfmax_vf;
 # vfmax.vf        31..26=0x06 vm vs2 rs1 14..12=0x5 vd 6..0=0x57
