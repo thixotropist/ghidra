@@ -462,7 +462,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 		}
 
 		final AtomicInteger foundCount = new AtomicInteger(0);
-		SymbolicPropogator prop = new SymbolicPropogator(program);
+		SymbolicPropogator prop = new SymbolicPropogator(program,false);
 
 		// try to compute the thunk by flowing constants from the start of the block
 		prop.flowConstants(jumpBlockAt.getFirstStartAddress(), jumpBlockAt,
@@ -563,6 +563,13 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 		Listing listing = program.getListing();
 
 		Instruction instr = listing.getInstructionAt(entry);
+
+		// if there is no pcode, go to the next instruction
+		// assume fallthrough (ie. x86 instruction ENDBR64)
+		// TODO: at some point, might need to do a NOP detection
+		if (instr != null && instr.getPcode().length == 0) {
+			instr = listing.getInstructionAfter(entry);
+		}
 		if (instr == null) {
 			return null;
 		}
@@ -628,6 +635,8 @@ public class CreateThunkFunctionCmd extends BackgroundCommand<Program> {
 
 			// keep going if flow target is right below, allow only a simple branch.
 			if (isLocalBranch(listing, instr, flowType)) {
+				Address[] flows = instr.getFlows();
+				instr = listing.getInstructionAt(flows[0]);
 				continue;
 			}
 

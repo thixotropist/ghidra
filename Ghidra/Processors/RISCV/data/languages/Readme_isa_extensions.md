@@ -96,20 +96,7 @@ the ELF binary.
 ### Ghidra's approach to RISCV extensions
 
 When Ghidra imports an ELF file it inspects `e_machine` and `e_flags` to find the *basic* RISCV variant.  The known variants are defined in `riscv.opinion`.
-A binary for a general purpose 64 bit RISCV processor with the G profile (I, M, A, and F extensions) and the C extension will get the `RV64GC` variant as the default 'language'.
-If the user enables languages other than the recommended language they will also see variants defined in `riscv.ldefs`.
-This includes `RV64GC` as well as `RV64GCV_THEAD`, where `RV64GCV_THEAD` includes the roughly 10 Alibaba THead extensions supported in the `binutils` gas testsuite.  
-
-Each variant links to a (likely shared) `slaspec` file to include base and extension instructions for that variant.  These are short files that provide `@define` and `@include` statements to access
-specific files in this directory.  The general purpose 64 bit `RV64GC` variant uses the slaspec file (`riscv.lp64d.slaspec`) and includes three baseline `riscv.*.sinc` files and one place-holder `riscv.custom.sinc` file.
-The THead variant `RV64GCV_THEAD` slaspec file `riscv.lp64d_thead.slaspec` is similar, except for:
-
-* `riscv.custom.sinc` is excluded as these placeholder opcodes may conflict with the THead extension opcodes
-* `riscv.xthead.sinc` is included as the `sinc` file holding the 10 current THead extensions supported by binutils
-* `@define` statements enabling each of the 10 extensions, using binutils naming conventions.
-
-Ghidra scans for `slaspec` files during its sleigh compile phase, generating a new `.sla` file for each RISCV variant found.
-After compression, that means each explicit combination of supported extensions adds about 250KBytes to the Ghidra distribution.
+A binary for a general purpose 64 bit RISCV processor with the G profile (I, M, A, and F extensions) and the C extension will get the `RISCV` language as the default variant.
 
 ### Gnu Compiler Suite approach to RISCV extensions
 
@@ -125,7 +112,7 @@ any of the vector intrinsic functions, so there is no immediate way Ghidra can i
 
 See https://github.com/ggerganov/whisper.cpp.git for an example of riscv vector instrinsic use, in the file `ggml_quants.c`.
 
->Warning: Programs that use vector instrinsic functions directly can have hard-to-debug dependencies on vector register length, exception handling, and alignment.  
+>Warning: Programs that use vector intrinsic functions directly can have hard-to-debug dependencies on vector register length, exception handling, and alignment.
 
 ## Experimental approach to Ghidra support of RISCV instruction extensions
 
@@ -178,7 +165,3 @@ Success -- vse8
 Total tests applied = 3
 Total passing tests = 3
 ```
-
->TODO: The sleigh language `RISCV:LE:64:RV64GC` needs a better name, as it
->      includes many standard-tracked extensions beyond those explicitly named
->      by the `GC` suffix.

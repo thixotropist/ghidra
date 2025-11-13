@@ -16,7 +16,6 @@
 package ghidra.plugins.fsbrowser;
 
 import java.awt.Component;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
@@ -24,6 +23,7 @@ import java.util.*;
 
 import javax.swing.KeyStroke;
 
+import docking.DockingUtils;
 import docking.action.DockingAction;
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
@@ -101,7 +101,8 @@ public class FileSystemBrowserPlugin extends Plugin
 				.enabledWhen(ac -> tool.getProject() != null)
 				.menuPath(ToolConstants.MENU_FILE, "Open File System...")
 				.menuGroup("Import", "z")
-				.keyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_I, InputEvent.CTRL_DOWN_MASK))
+				.keyBinding(
+					KeyStroke.getKeyStroke(KeyEvent.VK_I, DockingUtils.CONTROL_KEY_MODIFIER_MASK))
 				.onAction(ac -> doOpenFileSystem())
 				.buildAndInstall(tool);
 	}
@@ -168,6 +169,12 @@ public class FileSystemBrowserPlugin extends Plugin
 		}
 
 		if (show) {
+			showProvider(provider);
+		}
+	}
+
+	public void showProvider(FSBComponentProvider provider) {
+		if (provider != null) {
 			getTool().showComponentProvider(provider, true);
 			getTool().toFront(provider);
 			provider.contextChanged();
@@ -283,18 +290,22 @@ public class FileSystemBrowserPlugin extends Plugin
 	}
 
 	/**
-	 * For testing access only.
+	 * Returns an already opened provider for the specified FSRL. 
 	 *
-	 * @param fsFSRL {@link FSRLRoot} of browser component to fetch.
+	 * @param fsrl {@link FSRL} of root dir of browser component to fetch.
 	 * @return provider or null if not found.
 	 */
-	/* package */ FSBComponentProvider getProviderFor(FSRLRoot fsFSRL) {
-		FSBComponentProvider provider = currentBrowsers.get(fsFSRL);
+	public FSBComponentProvider getProviderFor(FSRL fsrl) {
+		FSBComponentProvider provider = currentBrowsers.get(fsrl);
 		if (provider == null) {
-			Msg.info(this, "Could not find browser for " + fsFSRL);
+			Msg.info(this, "Could not find browser for " + fsrl);
 			return null;
 		}
 		return provider;
+	}
+
+	public List<FSRL> getCurrentlyOpenBrowsers() {
+		return List.copyOf(currentBrowsers.keySet());
 	}
 
 	//--------------------------------------------------------------------------------------------

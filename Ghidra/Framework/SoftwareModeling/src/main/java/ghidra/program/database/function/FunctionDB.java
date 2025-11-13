@@ -20,6 +20,8 @@ import static ghidra.program.util.FunctionChangeRecord.FunctionChangeType.*;
 import java.io.IOException;
 import java.util.*;
 
+import javax.help.UnsupportedOperationException;
+
 import db.DBRecord;
 import ghidra.program.database.*;
 import ghidra.program.database.data.DataTypeManagerDB;
@@ -140,6 +142,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	@Override
 	public void setThunkedFunction(Function referencedFunction) {
+		if (isExternal()) {
+			throw new UnsupportedOperationException("External functions may not be a thunk");
+		}
 		if ((referencedFunction != null) && !(referencedFunction instanceof FunctionDB)) {
 			throw new IllegalArgumentException("FunctionDB expected for referenced function");
 		}
@@ -580,12 +585,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 		if (Undefined.isUndefined(variableDataType)) {
 			return;
 		}
-		SourceType type = SourceType.ANALYSIS;
-		if (variableSourceType != type && variableSourceType.isHigherPriorityThan(type)) {
-			type = variableSourceType;
-		}
-		if (type.isHigherPriorityThan(getStoredSignatureSource())) {
-			setSignatureSource(type);
+		// TODO: It seems that the lowest parameter priority should win out (see GP-6013)
+		if (variableSourceType.isHigherPriorityThan(getStoredSignatureSource())) {
+			setSignatureSource(variableSourceType);
 		}
 	}
 
@@ -599,14 +601,14 @@ public class FunctionDB extends DatabaseObject implements Function {
 		boolean isReturnUndefined = Undefined.isUndefined(returnType);
 		SourceType type = isReturnUndefined ? SourceType.DEFAULT : SourceType.ANALYSIS;
 
+		// TODO: It seems that the lowest parameter priority should win out (see GP-6013)
 		Parameter[] parameters = getParameters();
 		for (Parameter parameter : parameters) {
 			if (Undefined.isUndefined(parameter.getDataType())) {
 				continue;
 			}
 			SourceType paramSourceType = parameter.getSource();
-			if (paramSourceType != SourceType.ANALYSIS &&
-				paramSourceType.isHigherPriorityThan(SourceType.ANALYSIS)) {
+			if (paramSourceType.isHigherOrEqualPriorityThan(SourceType.IMPORTED)) {
 				type = paramSourceType;
 			}
 			else {
@@ -1453,7 +1455,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 				symbolMap.put(s, paramDb);
 			}
 
-			if (source.isHigherPriorityThan(getStoredSignatureSource())) {
+			if (source != getStoredSignatureSource()) {
 				setSignatureSource(source);
 			}
 
@@ -2443,9 +2445,9 @@ public class FunctionDB extends DatabaseObject implements Function {
 
 	SourceType getStoredSignatureSource() {
 		byte flags = rec.getByteValue(FunctionAdapter.FUNCTION_FLAGS_COL);
-		int typeOrdinal = (flags &
+		int sourceTypeId = (flags &
 			FunctionAdapter.FUNCTION_SIGNATURE_SOURCE) >>> FunctionAdapter.FUNCTION_SIGNATURE_SOURCE_SHIFT;
-		return SourceType.values()[typeOrdinal];
+		return SourceType.getSourceType(sourceTypeId);
 	}
 
 	@Override

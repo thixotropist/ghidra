@@ -22,6 +22,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import ghidra.app.plugin.core.datamgr.util.DataTypeUtils;
 import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.format.dwarf.DWARFImportOptions.MacroEnumSetting;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileAddr;
 import ghidra.app.util.bin.format.dwarf.line.DWARFLine.SourceFileInfo;
@@ -223,13 +224,7 @@ public class DWARFImporter {
 		for (DWARFCompilationUnit cu : compUnits) {
 			DWARFLine dLine = cu.getLine();
 			monitor.increment(1);
-			for (int i = 0; i < dLine.getNumFiles(); ++i) {
-				String filePath = dLine.getFilePath(i, true);
-				if (filePath == null) {
-					continue;
-				}
-				byte[] md5 = dLine.getFile(i).getMD5();
-				SourceFileInfo sfi = new SourceFileInfo(filePath, md5);
+			for (SourceFileInfo sfi : dLine.getAllSourceFileInfos()) {
 				if (sourceFileInfoToSourceFile.containsKey(sfi)) {
 					continue;
 				}
@@ -237,11 +232,11 @@ public class DWARFImporter {
 					continue;
 				}
 				try {
-					String path = SourceFileUtils.normalizeDwarfPath(filePath,
+					String path = SourceFileUtils.normalizeDwarfPath(sfi.filePath(),
 						DEFAULT_COMPILATION_DIR);
 					SourceFileIdType type =
-						md5 == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
-					SourceFile sFile = new SourceFile(path, type, md5);
+						sfi.md5() == null ? SourceFileIdType.NONE : SourceFileIdType.MD5;
+					SourceFile sFile = new SourceFile(path, type, sfi.md5());
 					sourceManager.addSourceFile(sFile);
 					sourceFileInfoToSourceFile.put(sfi, sFile);
 				}
@@ -433,9 +428,17 @@ public class DWARFImporter {
 				}
 			}
 		}
+		MacroEnumSetting setting = importOptions.getMacroEnumSetting();
+		if (!setting.equals(MacroEnumSetting.NONE)) {
+			long macro_ts = System.currentTimeMillis();
+			DWARFMacroEnumCreator enumCreator = new DWARFMacroEnumCreator(prog);
+			enumCreator.createEnumsFromMacroInfo(setting.equals(MacroEnumSetting.ALL), monitor);
+			importSummary.macroElapsedMS = System.currentTimeMillis() - macro_ts;
+		}
 
 		importSummary.totalElapsedMS = System.currentTimeMillis() - start_ts;
 
 		return importSummary;
 	}
+
 }

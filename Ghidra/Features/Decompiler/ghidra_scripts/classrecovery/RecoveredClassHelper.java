@@ -137,11 +137,14 @@ public class RecoveredClassHelper {
 	protected final boolean createBookmarks;
 	protected final boolean useShortTemplates;
 	protected final boolean nameVfunctions;
+	protected final boolean makeVfunctionsThisCalls;
+
 	public HashMap<Address, Set<Function>> allVfunctions = new HashMap<>();
 
 	public RecoveredClassHelper(Program program, ServiceProvider serviceProvider,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVunctions, TaskMonitor monitor) throws Exception {
+			boolean nameVunctions, boolean makeVfunctionsThisCalls, TaskMonitor monitor)
+			throws Exception {
 
 		this.monitor = monitor;
 		this.program = program;
@@ -156,6 +159,7 @@ public class RecoveredClassHelper {
 		this.createBookmarks = createBookmarks;
 		this.useShortTemplates = useShortTemplates;
 		this.nameVfunctions = nameVunctions;
+		this.makeVfunctionsThisCalls = makeVfunctionsThisCalls;
 
 		globalNamespace = (GlobalNamespace) program.getGlobalNamespace();
 
@@ -4501,7 +4505,7 @@ public class RecoveredClassHelper {
 
 				// if the function is a purecall need to create the function definition using
 				// the equivalent child virtual function signature
-				if (nameField.contains("purecall")) {
+				if (nameField.contains("purecall") || nameField.contains("pure_virtual")) {
 
 					nameField = DEFAULT_VFUNCTION_PREFIX + vfunctionNumber;
 
@@ -4579,14 +4583,10 @@ public class RecoveredClassHelper {
 		List<Address> processedVftables = new ArrayList<Address>();
 
 		// get references to purecall function to figure out which classes to process
-		ReferenceIterator purecallRefs =
-			program.getReferenceManager().getReferencesTo(purecall.getEntryPoint());
+		HashSet<Address> purecallRefs = getPurecallRefs();
 
-		while (purecallRefs.hasNext()) {
+		for (Address fromAddress : purecallRefs) {
 			monitor.checkCancelled();
-
-			Reference purecallRef = purecallRefs.next();
-			Address fromAddress = purecallRef.getFromAddress();
 
 			// get data containing the purecall reference to get the vftable structure
 			Data data = program.getListing().getDataContaining(fromAddress);
@@ -4656,6 +4656,33 @@ public class RecoveredClassHelper {
 
 		}
 
+	}
+
+	// get references to purecall function to figure out which classes to process
+	HashSet<Address> getPurecallRefs() throws CancelledException {
+
+		HashSet<Address> purecalls = new HashSet<>();
+		ReferenceIterator purecallRefs =
+			program.getReferenceManager().getReferencesTo(purecall.getEntryPoint());
+
+		while (purecallRefs.hasNext()) {
+			monitor.checkCancelled();
+			purecalls.add(purecallRefs.next().getFromAddress());
+		}
+
+		Address[] functionThunkAddresses = purecall.getFunctionThunkAddresses(true);
+		if (functionThunkAddresses != null) {
+			for (Address purecallThunk : functionThunkAddresses) {
+				monitor.checkCancelled();
+				purecallRefs =
+					program.getReferenceManager().getReferencesTo(purecallThunk);
+				while (purecallRefs.hasNext()) {
+					monitor.checkCancelled();
+					purecalls.add(purecallRefs.next().getFromAddress());
+				}
+			}
+		}
+		return purecalls;
 	}
 
 	/**
@@ -4770,8 +4797,10 @@ public class RecoveredClassHelper {
 			// can't put external functions into a namespace from this program
 			if (!vfunction.isExternal()) {
 
-				// if not already, make it a this call
-				makeFunctionThiscall(vfunction);
+				// check script option and if not already, make it a this call
+				if (makeVfunctionsThisCalls) {
+					makeFunctionThiscall(vfunction);
+				}
 
 				// put symbol on the virtual function
 				Symbol vfunctionSymbol = vfunction.getSymbol();

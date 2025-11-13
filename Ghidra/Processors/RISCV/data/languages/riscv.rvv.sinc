@@ -1,5 +1,4 @@
-# Vector Extension
-#  See https://github.com/riscv/riscv-v-spec/blob/master/v-spec.adoc
+# Vector
 
 # sew: "e8"    is vsew=0 {}
 # sew: "e16"   is vsew=1 {}
@@ -30,7 +29,7 @@
 # mop=0  unit-stride        VSE<EEW>
 # mop=1  indexed-unordered  VSUXEI<EEW>
 # mop=2  strided            VSSE<EEW>
-# mop=3  indexed-ordered    VSOXEI<EEW>
+# mop=3  indexed-ordered    VSXEI<EEW>
 # lumop=0  unit-stride
 # lumop=8  unit-stride,whole registers
 # lumop=16 unit-stride fault-only-first
@@ -84,8 +83,8 @@ define pcodeop vadc_vxm;
 define pcodeop vadd_vi;
 # vadd.vi        31..26=0x00 vm vs2 simm5 14..12=0x3 vd 6..0=0x57
 # vadd.vi vd, vs2, simm5, vm   # vector-immediate
-:vadd.vi  vd, vs2, simm5         is op2631=0 & op2525=0x1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 {vd=vadd_vi(vs2,simm5);}
-:vadd.vi  vd, vs2, simm5, "v0.t" is op2631=0 & op2525=0x0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 {vd=vadd_vi(vs2,simm5,v0);}
+:vadd.vi  vd, vs2, simm5         is op2631=0x0 & op2525=0x1 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 {vd=vadd_vi(vs2,simm5);}
+:vadd.vi  vd, vs2, simm5, "v0.t" is op2631=0x0 & op2525=0x0 & vs2 & simm5 & op1214=0x3 & vd & op0006=0x57 {vd=vadd_vi(vs2,simm5,v0);}
 
 define pcodeop vadd_vv;
 # vadd.vv         31..26=0x00 vm vs2 vs1 14..12=0x0 vd 6..0=0x57
