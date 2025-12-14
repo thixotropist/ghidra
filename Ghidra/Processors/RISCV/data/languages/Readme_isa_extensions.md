@@ -144,12 +144,6 @@ tests to verify the supported RISCV processor/language definitions are loaded an
 The `datatests` directory holds binary instruction snippets to be decompiled, along with key strings as they must
 appear in the decompiler view.
 
-Basic combinations of RISCV architecture, extensions, and generated code are listed below.
-
-
-| Language | Data Test | Architecture | Notes |
-| ------------------ | --------- | ---------- | ----- |
-| RISCV:LE:64:RV64GC | `riscv_isaext_memcpy` | rv64gcv | Minimal test of 64 bit vectorized memcpy |
 
 Pre-commit testing should include something like:
 
@@ -165,3 +159,21 @@ Success -- vse8
 Total tests applied = 3
 Total passing tests = 3
 ```
+
+## Limitations - decompiler dependency calculations
+
+The Ghidra decompiler tracks dependencies between instructions, noting where register
+values are written and read amongst the blocks of any given function.  That's a problem
+with RISC-V vector instructions, since registers read, written, and modified are not fully encoded
+within those instructions.  The current vector context affects those decisions - and that vector context
+can change rapidly within a given RISC-V binary.
+
+* Registers are often grouped together to increase the number of elements processed per instruction.
+  Ghidra might see an instruction reading vector register v8 and modifying vector register v4,
+  but in execution registers v8, v9, v10, and v11 are used as input and
+  registers v4, v5, v6, and v7 are modified.
+* Vector context controls element masking and tail handling.  Most often, the context tells vector
+  instructions that unselected elements will not be used as later inputs.  If this is not the case,
+  then unmasked or tail elements may be marked as 'unchanged' - and the output vector register
+  must be considered an input vector register too.
+

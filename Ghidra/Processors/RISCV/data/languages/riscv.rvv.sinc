@@ -503,8 +503,7 @@ define pcodeop vasubu_vx;
 define pcodeop vcompress_vm;
 # vcompress.vm   31..26=0x17 25=1 vs2 vs1 14..12=0x2 vd 6..0=0x57
 # vcompress.vm vd, vs2, vs1  # Compress into vd elements of vs2 where vs1 is enabled
-:vcompress.vm  vd, vs2, vs1         is op2631=0x17 & op2525=0x1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vcompress_vm(vs2,vs1);}
-:vcompress.vm  vd, vs2, vs1, "v0.t" is op2631=0x17 & op2525=0x0 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vcompress_vm(vs2,vs1,v0);}
+:vcompress.vm  vd, vs2, vs1         is op2631=0x17 & op2525=0x1 & vs2 & vs1 & op1214=0x2 & vd & op0006=0x57 {vd=vcompress_vm(vs2,vs1,vd);}
 
 define pcodeop vdiv_vv;
 # vdiv.vv        31..26=0x21 vm vs2 vs1 14..12=0x2 vd 6..0=0x57
